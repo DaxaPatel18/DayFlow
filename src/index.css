@@ -1,0 +1,354 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #F7F8FC;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom smooth scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
+}
+
+/* ============================================================
+   Page & Modal Animation Utility Classes
+   ============================================================ */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ============================================================
+   New Premium Animation Keyframes
+   ============================================================ */
+
+/* Checkbox spring-check animation */
+@keyframes checkSpring {
+  0% { transform: scale(0.6); opacity: 0; }
+  55% { transform: scale(1.15); }
+  75% { transform: scale(0.92); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Progress bar fill on mount */
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+/* Toast slide-in from bottom */
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Sidebar active indicator slide-in */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: scaleY(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+/* Celebration ring pulse */
+@keyframes celebrationRing {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* Streak flame pulse */
+@keyframes flamePulse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-3deg); }
+  75% { transform: scale(0.95) rotate(3deg); }
+}
+
+/* Number count-up feel */
+@keyframes numberPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Subtle card enter */
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInScale 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-sheet-up {
+  animation: slideUpSheet 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-check-spring {
+  animation: checkSpring 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-toast-slide-up {
+  animation: toastSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-flame-pulse {
+  animation: flamePulse 1.5s ease-in-out infinite;
+}
+
+.animate-number-pop {
+  animation: numberPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.animate-card-enter {
+  animation: cardEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-celebration-ring {
+  animation: celebrationRing 1s ease-out infinite;
+}
+
+/* Shimmer skeleton loading */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 25%,
+    #e2e8f0 50%,
+    #f1f5f9 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animated gradient background */
+.gradient-animated {
+  background: linear-gradient(-45deg, #1e1b4b, #312e81, #3730a3, #4338ca);
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+}
+
+/* ============================================================
+   Card hover micro-interaction
+   ============================================================ */
+.card-hover-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.card-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px -2px rgba(99, 102, 241, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* ============================================================
+   Premium input focus ring
+   ============================================================ */
+.input-premium {
+  border: 1px solid #E5E7EB;
+  background: #F8FAFC;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.input-premium:focus {
+  outline: none;
+  border-color: #6366F1;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* ============================================================
+   Sidebar active nav indicator
+   ============================================================ */
+.sidebar-nav-active {
+  position: relative;
+}
+.sidebar-nav-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: #6366F1;
+  border-radius: 0 3px 3px 0;
+  animation: slideInLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ============================================================
+   Bottom nav active indicator
+   ============================================================ */
+.bottom-nav-active-indicator {
+  position: relative;
+}
+.bottom-nav-active-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2.5px;
+  background: linear-gradient(90deg, #6366F1, #8B5CF6);
+  border-radius: 0 0 4px 4px;
+}
+
+/* ============================================================
+   Progress bar animated fill
+   ============================================================ */
+.progress-bar-fill {
+  animation: progressFill 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ============================================================
+   Section divider with label
+   ============================================================ */
+.section-label-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.section-label-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E5E7EB;
+}
+
+/* ============================================================
+   Task row hover warmth
+   ============================================================ */
+.task-row-hover {
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.task-row-hover:hover {
+  background-color: #fafbff;
+  border-color: #c7d2fe !important;
+  box-shadow: 0 2px 8px -2px rgba(99, 102, 241, 0.08);
+}
+
+/* Stagger animation delays for list items */
+.stagger-1 { animation-delay: 0.04s; }
+.stagger-2 { animation-delay: 0.08s; }
+.stagger-3 { animation-delay: 0.12s; }
+.stagger-4 { animation-delay: 0.16s; }
+.stagger-5 { animation-delay: 0.20s; }
+.stagger-6 { animation-delay: 0.24s; }
+
+/* ============================================================
+   Toast type color variants (applied via class)
+   ============================================================ */
+.toast-success {
+  background: #111827;
+  border-color: rgba(71, 85, 105, 0.5);
+}
+.toast-error {
+  background: #450a0a;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.toast-info {
+  background: #1e1b4b;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+.toast-warning {
+  background: #431407;
+  border-color: rgba(245, 158, 11, 0.4);
+}

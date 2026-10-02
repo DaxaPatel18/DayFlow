@@ -1,0 +1,6 @@
+{
+  "name": "DayFlow - Modern Productivity Dashboard",
+  "description": "Plan your day. Stay consistent. Get things done. A modern productivity dashboard featuring daily routines, tasks, visual calendar scheduling, and focus analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
