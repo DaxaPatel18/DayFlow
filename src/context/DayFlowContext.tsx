@@ -527,26 +527,15 @@ export const DayFlowProvider: React.FC<{ children: ReactNode }> = ({ children })
     let nextCompleted = false;
     let completedAtVal: string | null = null;
 
+    // Compute the toggled task first, then build nextTasks without a self-reference
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    nextCompleted = !task.completed;
+    completedAtVal = nextCompleted ? new Date().toISOString() : null;
+
     const nextTasks = tasks.map((t) => {
       if (t.id === taskId) {
-        nextCompleted = !t.completed;
-        completedAtVal = nextCompleted ? new Date().toISOString() : null;
-        if (nextCompleted) {
-          const todayTasksList = nextTasks.filter((t) => t.date === todayDate);
-          const allTodayDone = todayTasksList.length > 0 && todayTasksList.every((t) => t.completed);
-          if (allTodayDone) {
-            try {
-              confetti({
-                particleCount: 45,
-                spread: 70,
-                origin: { y: 0.7 },
-                colors: ['#6366F1', '#8B5CF6', '#22C55E', '#F59E0B'],
-              });
-            } catch {
-              // ignore in non-browser
-            }
-          }
-        }
         return {
           ...t,
           completed: nextCompleted,
@@ -558,15 +547,40 @@ export const DayFlowProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     updateTasksLocal(nextTasks);
 
+    // Confetti when all today's tasks are done — runs after state is set
+    if (nextCompleted) {
+      const todayTasksList = nextTasks.filter((t) => t.date === todayDate);
+      const allTodayDone = todayTasksList.length > 0 && todayTasksList.every((t) => t.completed);
+      if (allTodayDone) {
+        try {
+          confetti({
+            particleCount: 45,
+            spread: 70,
+            origin: { y: 0.7 },
+            colors: ['#6366F1', '#8B5CF6', '#22C55E', '#F59E0B'],
+          });
+        } catch {
+          // ignore in non-browser
+        }
+      }
+    }
+
     if (user?.id) {
       (async () => {
         try {
-          await supabase.from('tasks').update({
+          const { error } = await supabase.from('tasks').update({
             completed: nextCompleted,
             completed_at: completedAtVal,
           }).eq('id', taskId).eq('user_id', user.id);
+          if (error) {
+            console.error('Supabase toggleTaskComplete error:', error);
+            // Rollback optimistic update on failure
+            updateTasksLocal(tasks);
+          }
         } catch (e) {
           console.error('Supabase toggleTaskComplete error:', e);
+          // Rollback optimistic update on failure
+          updateTasksLocal(tasks);
         }
       })();
     }

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { jsPDF } from 'jspdf';
 import {
   CheckCircle2,
   TrendingUp,
@@ -267,31 +268,193 @@ export const ProgressPage: React.FC = () => {
   }, []);
 
   const handleExport = () => {
-    const summary = {
-      exportDate: new Date().toISOString(),
-      user: settings.name,
-      role: settings.role,
-      weeklyCompleted: totalWeeklyTasks,
-      completionRate: weeklyCompletionRate !== null ? `${weeklyCompletionRate}%` : '0%',
-      streak,
-      mostProductiveDay: peakDayLabel,
-      totalTasks: tasks.length,
-      completedTasks: tasks.filter((t) => t.completed).length,
-      categoryBreakdown: categoryData.map((c) => ({
-        name: c.name,
-        count: c.value,
-        pct: `${c.pct ?? 0}%`,
-      })),
-      routineCount: routines.filter((r) => r.enabled).length,
-    };
-    const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `DayFlow_Progress_${toISODateString(new Date())}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Exported progress report');
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 18;
+      const contentW = pageW - margin * 2;
+      let y = margin;
+
+      const safe = (val: string | number | null | undefined, fallback = 'No data') =>
+        val !== null && val !== undefined && val !== '' && !Number.isNaN(val)
+          ? String(val)
+          : fallback;
+
+      // Header bar
+      doc.setFillColor(99, 102, 241); // indigo-500
+      doc.rect(0, 0, pageW, 14, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(255, 255, 255);
+      doc.text('DAYFLOW', margin, 9);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text('Productivity Report', margin + 22, 9);
+
+      y = 22;
+
+      // Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.setTextColor(17, 24, 39);
+      doc.text('DayFlow Productivity Report', margin, y);
+      y += 8;
+
+      // User & date metadata
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(107, 114, 128);
+      const dateStr = new Date().toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+      doc.text(`User: ${safe(settings.name, 'User')}`, margin, y);
+      y += 5;
+      doc.text(`Generated: ${dateStr}`, margin, y);
+      y += 4;
+
+      // Divider
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y);
+      y += 7;
+
+      // ── Section helper ──────────────────────────────────────────────
+      const sectionTitle = (title: string) => {
+        if (y > pageH - 30) { doc.addPage(); y = margin; }
+        doc.setFillColor(238, 242, 255); // indigo-50
+        doc.roundedRect(margin, y - 4, contentW, 8, 1.5, 1.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(67, 56, 202); // indigo-700
+        doc.text(title.toUpperCase(), margin + 3, y + 0.5);
+        y += 9;
+        doc.setTextColor(17, 24, 39);
+      };
+
+      const row = (label: string, value: string, indent = 0) => {
+        if (y > pageH - 15) { doc.addPage(); y = margin; }
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(107, 114, 128);
+        doc.text(label, margin + indent, y);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(17, 24, 39);
+        doc.text(value, margin + indent + 60, y);
+        y += 5.5;
+      };
+
+      // ── Summary Metrics ─────────────────────────────────────────────
+      sectionTitle('Summary Metrics');
+      row('Tasks Completed This Week', safe(totalWeeklyTasks, '0'));
+      row('Completion Rate', weeklyCompletionRate !== null ? `${weeklyCompletionRate}%` : 'No data');
+      row('Current Streak', streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : '0 days');
+      row('Most Productive Day', safe(totalWeeklyTasks > 0 ? peakDayLabel : null));
+      y += 2;
+
+      // ── Weekly Productivity ─────────────────────────────────────────
+      sectionTitle('Weekly Productivity');
+      const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      if (totalWeeklyTasks === 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(107, 114, 128);
+        doc.text('No completions recorded this week.', margin + 3, y);
+        y += 5.5;
+      } else {
+        weeklyData.forEach((d, i) => {
+          if (y > pageH - 15) { doc.addPage(); y = margin; }
+          const barMaxW = contentW - 70;
+          const barW = totalWeeklyTasks > 0 ? Math.round((d.tasks / Math.max(...weeklyData.map(x => x.tasks))) * barMaxW) : 0;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor(107, 114, 128);
+          doc.text(DAY_LABELS[i], margin + 3, y);
+          doc.setFillColor(i === peakDayIdx && d.tasks > 0 ? 124 : 99, i === peakDayIdx && d.tasks > 0 ? 58 : 102, i === peakDayIdx && d.tasks > 0 ? 237 : 241);
+          if (barW > 0) doc.roundedRect(margin + 14, y - 3.5, barW, 4, 0.8, 0.8, 'F');
+          doc.setTextColor(17, 24, 39);
+          doc.setFont('helvetica', 'bold');
+          doc.text(String(d.tasks), margin + 14 + barW + 2, y);
+          y += 5.5;
+        });
+      }
+      y += 2;
+
+      // ── Tasks by Category ───────────────────────────────────────────
+      sectionTitle('Tasks by Category');
+      if (categoryData.length === 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(107, 114, 128);
+        doc.text('No tasks created yet.', margin + 3, y);
+        y += 5.5;
+      } else {
+        categoryData.forEach((cat) => {
+          row(cat.name, `${cat.value} task${cat.value !== 1 ? 's' : ''} (${cat.pct}%)`, 3);
+        });
+      }
+      y += 2;
+
+      // ── Routine Consistency ─────────────────────────────────────────
+      sectionTitle('Routine Consistency');
+      const enabledRoutines = routines.filter((r) => r.enabled).length;
+      row('Active Routines', `${enabledRoutines} of ${routines.length}`);
+      row('Current Streak', streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : 'No active streak');
+      row('Avg Routine Start Time', safe(avgStartTime));
+      y += 2;
+
+      // ── Focus Insights ──────────────────────────────────────────────
+      sectionTitle('Focus Insights');
+      const totalDone = tasks.filter((t) => t.completed).length;
+      const totalTasksAll = tasks.length;
+      const overallRate = totalTasksAll > 0 ? Math.round((totalDone / totalTasksAll) * 100) : null;
+      row('Total Tasks (All Time)', safe(totalTasksAll, '0'));
+      row('Total Completed', safe(totalDone, '0'));
+      row('Overall Completion Rate', overallRate !== null ? `${overallRate}%` : 'No data');
+      row('Top Category', categoryData.length > 0 ? `${categoryData[0].name} (${categoryData[0].pct}%)` : 'No data');
+      y += 2;
+
+      // ── Milestones ──────────────────────────────────────────────────
+      const achievedMilestones: string[] = [];
+      if (streak >= 7) achievedMilestones.push('🔥 7-Day Streak achieved');
+      if (totalDone >= 10) achievedMilestones.push('✓ 10 Tasks completed');
+      if (routines.length >= 3) achievedMilestones.push('🎯 3+ Routines set up');
+      if (weeklyCompletionRate !== null && weeklyCompletionRate >= 80) achievedMilestones.push('⭐ 80% Weekly rate achieved');
+
+      if (achievedMilestones.length > 0) {
+        sectionTitle('Milestones Achieved');
+        achievedMilestones.forEach((m) => {
+          if (y > pageH - 15) { doc.addPage(); y = margin; }
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(17, 24, 39);
+          doc.text(m, margin + 3, y);
+          y += 5.5;
+        });
+        y += 2;
+      }
+
+      // Footer on every page
+      const totalPages = doc.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(156, 163, 175);
+        doc.text(
+          `DayFlow Productivity Report  •  Generated ${dateStr}  •  Page ${p} of ${totalPages}`,
+          margin,
+          pageH - 8
+        );
+      }
+
+      const fileName = `DayFlow_Productivity_Report_${toISODateString(new Date())}.pdf`;
+      doc.save(fileName);
+      showToast('PDF report downloaded successfully', 'success');
+    } catch (err) {
+      console.error('PDF export error:', err);
+      showToast('Could not generate PDF report.', 'error');
+    }
   };
 
   if (isLoadingData) {
@@ -353,7 +516,7 @@ export const ProgressPage: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E5E7EB] text-[#111827] hover:bg-slate-50 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
           >
             <Share2 className="w-3.5 h-3.5 text-[#6B7280]" />
-            <span>Export</span>
+            <span>Export Report</span>
           </button>
         </div>
       </div>
